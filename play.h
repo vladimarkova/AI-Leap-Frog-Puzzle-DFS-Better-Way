@@ -7,7 +7,7 @@ using namespace std;
 void game_test() {
     char response = '1';
     while (response != '0') {
-        // read();
+        read();
 
         using namespace std::chrono;
         high_resolution_clock::time_point t1 = high_resolution_clock::now();  
@@ -18,7 +18,7 @@ void game_test() {
         duration<double, std::milli> time_span = t2 - t1; 
         cout << "Time in miliseconds for execution was: " << time_span.count() << " milliseconds." << endl;    
 
-        print();
+        // print();
 
         cout << "Enter 1 to start a new game or 0 to stop: " << endl << endl; 
 
