@@ -29,23 +29,6 @@ struct State
             configuration[i] = 'R';
         }
     }
-    vector<State> generate_children() const
-    {
-        int iterations = 0;
-        if (empty_space_outer())
-        {
-            iterations = CHILDREN_FROM_OUTER_ES;
-            for (int i = 0; i < iterations; i++)
-            {
-            }
-        }
-        else
-        {
-            iterations = CHILDREN_FROM_INNER_ES;
-        }
-
-        return {};
-    }
     bool is_goal() const
     {
         for (int i = 0; i < number_of_frogs / 2; i++)
@@ -84,6 +67,17 @@ struct State
     bool empty_space_inner() const
     {
         return !empty_space_outer();
+    }
+    int get_empty_space_index() const
+    {
+        for (int i = 0; i < (2 * number_of_frogs + 1); i++)
+        {
+            if (configuration[i] == '-')
+            {
+                return i;
+            }
+        }
+        return 0;
     }
     void right_frog_single_jump(int frog_index)
     {
@@ -137,6 +131,73 @@ struct State
                  << endl;
         }
     }
+    vector<State> generate_children() const
+    {
+        vector<State> children_generated;
+        int rightmost_index = 2 * number_of_frogs;
+        if (empty_space_outer()) // leftmost space = '-' or rightmost space = '-'
+        {
+            if (configuration[0] == '-')
+            {
+                if (configuration[1] == 'R')
+                {
+                    State child1 = *this;
+                    child1.right_frog_single_jump(1);
+                    children_generated.push_back(child1);
+                }
+                if (configuration[2] == 'R')
+                {
+                    State child2 = *this;
+                    child2.right_frog_double_jump(2);
+                    children_generated.push_back(child2);
+                }
+            }
+            if (configuration[rightmost_index] == '-')
+            {
+                if (configuration[rightmost_index - 1] == 'L')
+                {
+                    State child1 = *this;
+                    child1.left_frog_single_jump(rightmost_index - 1);
+                    children_generated.push_back(child1);
+                }
+                if (configuration[rightmost_index - 2] == 'L')
+                {
+                    State child2 = *this;
+                    child2.left_frog_double_jump(rightmost_index - 2);
+                    children_generated.push_back(child2);
+                }
+            }
+        }
+        else // empty space = '-' is inner
+        {
+            int empty_space_index = get_empty_space_index();
+            if (configuration[empty_space_index - 1] == 'L')
+            {
+                State child1 = *this;
+                child1.left_frog_single_jump(empty_space_index - 1);
+                children_generated.push_back(child1);
+            }
+            if (configuration[empty_space_index - 2] == 'L')
+            {
+                State child2 = *this;
+                child2.left_frog_double_jump(empty_space_index - 2);
+                children_generated.push_back(child2);
+            }
+            if (configuration[empty_space_index + 1] == 'R')
+            {
+                State child3 = *this;
+                child3.right_frog_single_jump(empty_space_index + 1);
+                children_generated.push_back(child3);
+            }
+            if (configuration[empty_space_index + 2] == 'R')
+            {
+                State child4 = *this;
+                child4.right_frog_double_jump(empty_space_index + 2);
+                children_generated.push_back(child4);
+            }
+        }
+        return children_generated;
+    }
 };
 
 /* #endregion */
@@ -161,25 +222,39 @@ void isolated_tests()
 {
     State initial_state;
     initial_state.make_start();
-    cout << "Is goal state? " << boolalpha << initial_state.is_goal() << endl
-         << endl;
-    initial_state.print_state();
-    cout << "Is empty space inner? " << boolalpha << initial_state.empty_space_inner() << endl
-         << endl;
+    /* #region Jumps */
     // initial_state.right_frog_single_jump(4);
     // initial_state.print_state();
     // initial_state.left_frog_single_jump(2);
     // initial_state.print_state();
     // initial_state.right_frog_double_jump(5);
     // initial_state.print_state();
-    initial_state.left_frog_double_jump(1);
-    initial_state.print_state();
+    // initial_state.left_frog_double_jump(1);
+    // initial_state.print_state();
+    /* #endregion */
+    vector<State> children = initial_state.generate_children();
+    for (int i = 0; i < children.size(); i++) {
+        children[i].print_state();
+    }
+    /* #region Generate children */
+    cout << "First child children: " << endl << endl;
+    vector<State> children_of_first_child = children[0].generate_children();
+    for (int i = 0; i < children_of_first_child.size(); i++) {
+        children_of_first_child[i].print_state();
+    }
+    vector<State> children_third_generation = children_of_first_child[1].generate_children();
+    cout << "Third generation: " << endl << endl;
+    for (int i = 0; i < children_third_generation.size(); i++) {
+        children_third_generation[i].print_state();
+    }
+    /* #endregion */
 }
 
 /* #endregion */
 
 /* #region Play */
-void play() {
+void play()
+{
     isolated_tests();
 }
 /* #endregion */
