@@ -1,5 +1,7 @@
 #include <iostream>
+#include <unordered_set>
 #include <vector>
+#include <string>
 using namespace std;
 
 /* #region Constants */
@@ -7,6 +9,8 @@ const int MAX_NUMBER_OF_FROGS = 100;
 const int MAX_ALL_PLACES = 2 * MAX_NUMBER_OF_FROGS + 1;
 const int CHILDREN_FROM_INNER_ES = 4;                          // ES <=> EMPTY SPACE
 const int CHILDREN_FROM_OUTER_ES = CHILDREN_FROM_INNER_ES / 2; // ES <=> EMPTY SPACE
+const int FOUND = 1;
+const int MAX_PRINTING_SIZE = 14;
 /* #endregion */
 
 /* #region Variables */
@@ -31,18 +35,18 @@ struct State
     }
     bool is_goal() const
     {
-        for (int i = 0; i < number_of_frogs / 2; i++)
+        for (int i = 0; i < number_of_frogs; i++)
         {
             if (configuration[i] != 'R')
             {
                 return false;
             }
         }
-        if (configuration[number_of_frogs / 2] != '_')
+        if (configuration[number_of_frogs] != '-')
         {
             return false;
         }
-        for (int i = (number_of_frogs / 2) + 1; i < number_of_frogs; i++)
+        for (int i = (number_of_frogs + 1); i < 2 * number_of_frogs + 1; i++)
         {
             if (configuration[i] != 'L')
             {
@@ -86,11 +90,11 @@ struct State
             configuration[frog_index - 1] = configuration[frog_index];
             configuration[frog_index] = '-';
         }
-        else
-        {
-            cout << "Error in empty spaces!" << endl
-                 << endl;
-        }
+        // else
+        // {
+        //     cout << "Error in empty spaces!" << endl
+        //          << endl;
+        // }
     }
     void left_frog_single_jump(int frog_index)
     {
@@ -99,11 +103,11 @@ struct State
             configuration[frog_index + 1] = configuration[frog_index];
             configuration[frog_index] = '-';
         }
-        else
-        {
-            cout << "Error in empty spaces!" << endl
-                 << endl;
-        }
+        // else
+        // {
+        //     cout << "Error in empty spaces!" << endl
+        //          << endl;
+        // }
     }
     void right_frog_double_jump(int frog_index)
     {
@@ -112,11 +116,11 @@ struct State
             configuration[frog_index - 2] = configuration[frog_index];
             configuration[frog_index] = '-';
         }
-        else
-        {
-            cout << "Error in empty spaces!" << endl
-                 << endl;
-        }
+        // else
+        // {
+        //     cout << "Error in empty spaces!" << endl
+        //          << endl;
+        // }
     }
     void left_frog_double_jump(int frog_index)
     {
@@ -125,11 +129,11 @@ struct State
             configuration[frog_index + 2] = configuration[frog_index];
             configuration[frog_index] = '-';
         }
-        else
-        {
-            cout << "Error in empty spaces!" << endl
-                 << endl;
-        }
+        // else
+        // {
+        //     cout << "Error in empty spaces!" << endl
+        //          << endl;
+        // }
     }
     vector<State> generate_children() const
     {
@@ -198,6 +202,15 @@ struct State
         }
         return children_generated;
     }
+    string code() const
+    {
+        string result;
+        for (int i = 0; i < (2 * number_of_frogs + 1); i++)
+        {
+            result.push_back(configuration[i]);
+        }
+        return result;
+    }
 };
 
 /* #endregion */
@@ -233,28 +246,117 @@ void isolated_tests()
     // initial_state.print_state();
     /* #endregion */
     vector<State> children = initial_state.generate_children();
-    for (int i = 0; i < children.size(); i++) {
+    for (int i = 0; i < children.size(); i++)
+    {
         children[i].print_state();
     }
-    /* #region Generate children */
-    cout << "First child children: " << endl << endl;
-    vector<State> children_of_first_child = children[0].generate_children();
-    for (int i = 0; i < children_of_first_child.size(); i++) {
-        children_of_first_child[i].print_state();
-    }
-    vector<State> children_third_generation = children_of_first_child[1].generate_children();
-    cout << "Third generation: " << endl << endl;
-    for (int i = 0; i < children_third_generation.size(); i++) {
-        children_third_generation[i].print_state();
-    }
-    /* #endregion */
+    string encoded_configuration = initial_state.code();
+    cout << "Encoded initial state: " << encoded_configuration << endl
+         << endl;
+    initial_state.configuration[0] = 'R';
+    initial_state.configuration[1] = 'R';
+    initial_state.configuration[2] = 'R';
+    initial_state.configuration[3] = 'R';
+    initial_state.configuration[4] = 'R';
+    initial_state.configuration[5] = '-';
+    initial_state.configuration[6] = 'L';
+    initial_state.configuration[7] = 'L';
+    initial_state.configuration[8] = 'L';
+    initial_state.configuration[9] = 'L';
+    initial_state.configuration[10] = 'L';
+    initial_state.print_state();
+    cout << "IS A GOAL STATE: " << boolalpha << initial_state.is_goal() << endl
+         << endl;
 }
+/* #endregion */
 
+/* #region dfs */
+int dfs(const State &state, vector<string> &steps, unordered_set<string> &visited_codes)
+{
+    visited_codes.insert(state.code());
+    if (state.is_goal())
+    {
+        cout << "GOAL" << endl
+             << endl;
+        return FOUND;
+    }
+    vector<State> children = state.generate_children();
+    int temp = 0;
+    if (children.size() != 0)
+    {
+        for (int i = 0; i < children.size(); i++)
+        {
+            if (!visited_codes.count(children[i].code()))
+            {
+                string encoded_child = children[i].code();
+                steps.push_back(encoded_child);
+                temp = dfs(children[i], steps, visited_codes);
+                if (temp == FOUND)
+                {
+                    return FOUND;
+                }
+                steps.pop_back();
+            }
+        }
+    }
+    return temp;
+}
+/* #endregion */
+
+/* #region Print */
+void print_steps(const vector<string> &steps)
+{
+    for (int i = 0; i < steps.size(); i++)
+    {
+        cout << steps[i] << endl;
+    }
+    cout << endl;
+}
 /* #endregion */
 
 /* #region Play */
-void play()
+vector<string> play()
 {
-    isolated_tests();
+    // isolated_tests();
+    read();
+    State initial_state;
+    vector<string> steps;
+    unordered_set<string> visited_codes;
+    initial_state.make_start();
+    int result_from_dfs = dfs(initial_state, steps, visited_codes);
+    if (result_from_dfs == FOUND)
+    {
+        cout << "RESULT FROM dfs: "
+             << "FOUND" << endl
+             << endl;
+    }
+    else
+    {
+        cout << "RESULT FROM dfs: " << result_from_dfs << endl
+             << endl;
+    }
+    if (result_from_dfs == FOUND)
+    {
+        steps.insert(steps.begin(), initial_state.code());
+        cout << "STEPS TO SOLUTION AS FOLLOWING: " << endl
+             << endl;
+        cout << "NUMBER OF STEPS (including the initial state and final state): " << steps.size() << endl
+             << endl;
+        if (number_of_frogs <= MAX_PRINTING_SIZE)
+        {
+            print_steps(steps);
+        }
+        else
+        {
+            cout << "WE PRINT THE STEPS ONLY IF NUMBER OF FROGS (SINGLE SIDE) IS LESS THAN OR EQUAL TO " << MAX_PRINTING_SIZE << endl
+                 << endl;
+        }
+        return steps;
+    }
+    cout << endl
+         << endl;
+    cout << "UNREACHED SOLUTION" << endl
+         << endl;
+    return {"UNREACHED SOLUTION"};
 }
 /* #endregion */
